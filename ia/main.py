@@ -58,6 +58,10 @@ def generate_and_save_images(model, epoch, test_input):
 
 @tf.function
 def train_step(images):
+    print(type(images))
+    print(len(images))
+    print(images.shape)
+
     noise = tf.random.normal([BATCH_SIZE, noise_dim])
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
@@ -108,16 +112,14 @@ if __name__ == "__main__":
                                      discriminator_optimizer=discriminator_optimizer,
                                      generator=generator, discriminator=discriminator)
 
-
-
-    BUFFER_SIZE = 177
+    BUFFER_SIZE = 87
     BATCH_SIZE = 16
     train_images = []
 
-    for f in os.listdir("../dataset2"):
-        temp = np.array(list(Image.open(os.path.join("../dataset2", f)).getdata()))
+    for f in os.listdir("../dataset3"):
+        temp = np.array(list(Image.open(os.path.join("../dataset3", f)).getdata()))
         max = temp.max()
-        train_images.append(train_images.append((temp - (max / 2) / max).reshape(-1, 512, 512, 1)))
+        train_images.append((temp - (max / 2) / max).reshape(-1, 128, 128, 1))
 
         # train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     train(train_images, 500)

@@ -22,6 +22,6 @@ def tile(filename, dir_in, dir_out, d):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     PIL.Image.MAX_IMAGE_PIXELS = 933120000
-    tile("mapwrld.png", "./", "./", 512)
+    tile("mapwrld.png", "./", "../dataset3temp", 128)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
