@@ -58,10 +58,6 @@ def generate_and_save_images(model, epoch, test_input):
 
 @tf.function
 def train_step(images):
-    print(type(images))
-    print(len(images))
-    print(images.shape)
-
     noise = tf.random.normal([BATCH_SIZE, noise_dim])
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
@@ -79,29 +75,43 @@ def train_step(images):
     generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
     discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
 
+    return gen_loss, disc_loss
+
 
 def train(dataset, epochs):
+    mgl, mdl = ([], [])
     for epoch in tqdm(range(epochs)):
+        ggl, gdl = ([], [])
         for image_batch in dataset:
-            train_step(image_batch)
+            gl, dl = train_step(image_batch)
+            ggl.append(gl)
+            gdl.append(dl)
+        mgl.append(sum(ggl) / len(ggl))
+        mdl.append(sum(gdl) / len(gdl))
         display.clear_output(wait=True)
         generate_and_save_images(generator, epoch + 1, seed)
     display.clear_output(wait=True)
     generate_and_save_images(generator, epochs, seed)
+
+    plt.figure(figsize=(6, 3))
+    plt.subplot(1, 2, 1)
+    plt.plot(mgl)
+    plt.subplot(1, 2, 2)
+    plt.plot(mdl)
+    plt.savefig("chart_loss.png")
 
 
 def display_image(epoch_no):
     return Image.open('image_at_epoch_{:04d}.png'.format(epoch_no))
 
 
-noise_dim = 100
+noise_dim = 1000
 num_examples_to_generate = 16
 
 seed = tf.random.normal([num_examples_to_generate, noise_dim])
 
 if __name__ == "__main__":
-    os.environ["TF_GPU_ALLOCATOR"] = "cuda_malloc_async"
-
+    # os.environ["TF_GPU_ALLOCATOR"] = "cuda_malloc_async"
     generator_optimizer = tf.keras.optimizers.Adam(1e-4)
     discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 
@@ -112,14 +122,15 @@ if __name__ == "__main__":
                                      discriminator_optimizer=discriminator_optimizer,
                                      generator=generator, discriminator=discriminator)
 
-    BUFFER_SIZE = 87
+    BUFFER_SIZE = 84
     BATCH_SIZE = 16
     train_images = []
 
     for f in os.listdir("../dataset3"):
         temp = np.array(list(Image.open(os.path.join("../dataset3", f)).getdata()))
         max = temp.max()
-        train_images.append((temp - (max / 2) / max).reshape(-1, 128, 128, 1))
+        train_images.append((temp - (max / 2) / max).reshape(128, 128, 1))
 
-        # train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
-    train(train_images, 500)
+    train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+
+    train(train_dataset, 500)
